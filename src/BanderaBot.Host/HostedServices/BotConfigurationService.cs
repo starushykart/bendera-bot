@@ -30,6 +30,7 @@ public class BotConfigurationService : IHostedService
         await client.SetWebhookAsync(
             url: webhookAddress,
             allowedUpdates: new[] { UpdateType.Message },
+            dropPendingUpdates: true,
             cancellationToken: cancellationToken);
     }
 

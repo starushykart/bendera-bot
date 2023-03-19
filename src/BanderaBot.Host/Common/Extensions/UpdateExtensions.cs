@@ -15,4 +15,10 @@ public static class UpdateExtensions
 
         return commandEntity is not null && BotCommands.List.Any(x => x.Command == update.Message.Text);
     }
+
+    public static string? GetUsername(this Message message)
+    {
+        return message.From?.FirstName
+            ?? message.From?.Username;
+    }
 }

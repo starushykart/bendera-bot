@@ -1,7 +1,9 @@
+using BanderaBot.Host.Common.Behaviors;
 using BanderaBot.Host.Common.Configuration;
 using BanderaBot.Host.Features;
 using BanderaBot.Host.HostedServices;
 using BanderaBot.Host.Services.Abstractions;
+using FluentValidation;
 using Microsoft.Extensions.Options;
 using Refit;
 using Telegram.Bot;
@@ -15,7 +17,12 @@ public static class ServiceCollectionExtensions
         return services
             .AddBotClient()
             .AddTranslatorClient()
-            .AddMediatR(x => x.RegisterServicesFromAssemblyContaining<IBotCommand>())
+            .AddMediatR(x =>
+            {
+                x.RegisterServicesFromAssemblyContaining<IBotCommand>();
+                x.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            })
+            .AddValidatorsFromAssemblyContaining<IBotCommand>()
             .AddHostedService<BotConfigurationService>();
     }
 

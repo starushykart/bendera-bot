@@ -30,7 +30,7 @@ public class BotController : ControllerBase
 
         var command = update.Type switch
         {
-            UpdateType.Message when update.Message?.Chat.Id != null => new DetectCommand(update.Message.Text, update.Message.MessageId, update.Message.Chat.Id),
+            UpdateType.Message when update.Message != null => new DetectCommand(update.Message),
             _ => null
         };
 

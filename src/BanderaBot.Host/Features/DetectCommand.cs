@@ -4,10 +4,11 @@ using BanderaBot.Host.Services.Abstractions;
 using BanderaBot.Host.Services.Models;
 using MediatR;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 
 namespace BanderaBot.Host.Features;
 
-public record DetectCommand(string? Text, int MessageId, long ChatId) : IRequest
+public record DetectCommand(Message Message) : IRequest
 {
     public class DetectCommandHandler : IRequestHandler<DetectCommand>
     {
@@ -22,19 +23,26 @@ public record DetectCommand(string? Text, int MessageId, long ChatId) : IRequest
         
         public async Task Handle(DetectCommand command, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrEmpty(command.Text))
+            if (string.IsNullOrEmpty(command.Message.Text))
                 return;
 
+            var username = command.Message.From?.FirstName
+                           ?? command.Message.From?.Username;
+
             var detectionResult =
-                await _client.DetectLanguageAsync(new[] { new DetectRequest(command.Text) }, cancellationToken);
+                await _client.DetectLanguageAsync(new[] { new DetectRequest(command.Message.Text) }, cancellationToken);
 
             if (detectionResult.Any(x => x.Language == "ru" && x.Score > 0.7))
             {
-                var randomBlameIndex = Rand.Default.Next(0, Blames.List.Length - 1);
+                var blames = string.IsNullOrEmpty(username)
+                    ? Blames.UnformattedList
+                    : Blames.List.ToArray();
                 
-                await _botClient.SendTextMessageAsync(command.ChatId,
-                    Blames.List[randomBlameIndex],
-                    replyToMessageId: command.MessageId,
+                var randomBlameIndex = Rand.Default.Next(0, blames.Length - 1);
+                
+                await _botClient.SendTextMessageAsync(command.Message.Chat.Id,
+                    string.Format(blames[randomBlameIndex], username),
+                    replyToMessageId: command.Message.MessageId,
                     cancellationToken: cancellationToken);
             }
         }
